@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f6f3ff">
+<title>Таблица умножения — тренажёр</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#251742;background:#f6f3ff;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 15% 10%,#e7dfff,transparent 55%),radial-gradient(ellipse at 95% 90%,#fff0c9,transparent 45%),#f6f3ff}
+main{width:min(100%,460px);background:white;border:1px solid #e7defa;border-radius:30px;padding:clamp(20px,6vw,38px);box-shadow:0 16px 55px #39217317;text-align:center}
+.badge{display:inline-block;padding:7px 14px;border-radius:999px;background:#fff0bd;color:#604300;font-size:.875rem;font-weight:750}h1{font-size:clamp(1.65rem,5vw,2.15rem);line-height:1.14;margin:14px 0 8px}p{margin:0;color:#5c526d;line-height:1.45}
+.problem{display:grid;place-items:center;margin:24px 0 18px;padding:18px 6px;border-radius:22px;background:#f2ecff;color:#44268e;font-size:clamp(2rem,10vw,3.5rem);font-weight:850;line-height:1.1;min-height:86px;font-variant-numeric:tabular-nums}.problem.done{font-size:clamp(1.25rem,5vw,1.85rem)}
+label{display:block;text-align:left;font-size:.95rem;font-weight:700;margin-bottom:7px}.row{display:flex;gap:9px}input,button{font:inherit;border-radius:13px;min-height:54px}input{width:100%;min-width:0;border:2px solid #d7cbe9;padding:8px 12px;background:white;color:#251742;font-size:1.3rem;font-weight:700}input[aria-invalid="true"]{border-color:#af283e}button{border:0;background:#613bc6;color:white;padding:0 15px;font-weight:750;cursor:pointer}button:hover{background:#4e2ba9}input:focus-visible,button:focus-visible{outline:3px solid #8059e0;outline-offset:3px}.hint{min-height:1.5em;margin-top:9px;color:#9a1d35;font-weight:750;text-align:left}.score{margin-top:12px;border-top:1px solid #eae4f4;padding-top:15px;font-size:.95rem}.score strong{color:#44268e}
+@media(max-width:330px){body{padding:12px}.row{flex-direction:column}}
+</style>
+</head>
+<body>
+<main>
+  <span class="badge">Умножение на 2, 3, 4 и 5</span>
+  <h1>Таблица умножения</h1>
+  <p>Реши все примеры. Они идут в случайном порядке и не повторяются.</p>
+  <div class="problem" id="problem" aria-live="polite" aria-atomic="true"></div>
+  <form id="practice" novalidate>
+    <label for="answer">Твой ответ</label>
+    <div class="row">
+      <input id="answer" type="text" inputmode="numeric" autocomplete="off" enterkeyhint="done" aria-describedby="hint">
+      <button type="submit">Проверить</button>
+    </div>
+    <p id="hint" class="hint" role="status"></p>
+  </form>
+  <button id="restart" type="button" hidden>Начать заново</button>
+  <p class="score">Решено примеров: <strong id="count">0 из 32</strong></p>
+  <noscript><p>Включи JavaScript в браузере, чтобы начать тренировку.</p></noscript>
+</main>
+<script>
+'use strict';
+const problem = document.querySelector('#problem');
+const answer = document.querySelector('#answer');
+const hint = document.querySelector('#hint');
+const count = document.querySelector('#count');
+const form = document.querySelector('#practice');
+const restart = document.querySelector('#restart');
+const pairs = [2, 3, 4, 5].flatMap(b => Array.from({length: 8}, (_, i) => [i + 2, b]));
+let round, solved;
+
+function clearHint() {
+  hint.textContent = '';
+  answer.removeAttribute('aria-invalid');
+}
+function showProblem() {
+  const [a, b] = round[solved];
+  problem.textContent = `${a} × ${b} = ?`;
+}
+function updateCount() {
+  count.textContent = `${solved} из ${round.length}`;
+}
+function startRound() {
+  round = pairs.slice();
+  for (let i = round.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [round[i], round[j]] = [round[j], round[i]];
+  }
+  solved = 0;
+  form.hidden = false;
+  restart.hidden = true;
+  problem.classList.remove('done');
+  answer.value = '';
+  clearHint();
+  updateCount();
+  showProblem();
+}
+answer.addEventListener('input', clearHint);
+form.addEventListener('submit', event => {
+  event.preventDefault();
+  if (solved >= round.length) return;
+  const [a, b] = round[solved];
+  const value = answer.value.trim();
+  if (!/^\d+$/.test(value) || Number(value) !== a * b) {
+    hint.textContent = value ? 'подумай ещё' : 'Введи ответ';
+    answer.setAttribute('aria-invalid', 'true');
+    answer.focus();
+    answer.select();
+    return;
+  }
+  clearHint();
+  answer.value = '';
+  solved++;
+  updateCount();
+  if (solved === round.length) {
+    form.hidden = true;
+    problem.classList.add('done');
+    problem.textContent = 'Отлично! Все примеры решены!';
+    restart.hidden = false;
+    restart.focus();
+  } else {
+    showProblem();
+    answer.focus();
+  }
+});
+restart.addEventListener('click', () => {
+  startRound();
+  answer.focus();
+});
+startRound();
+</script>
+</body>
+</html>
